@@ -19,8 +19,8 @@ services:
     volumes:
       - '${PWD}:/workspace/wordpress'
     ports:
-      - '6060:80'     # nginx
-      - '3660:3306' # mariadb
+      - '80:80'     # nginx
+      - '3306:3306' # mariadb
       - '3000:3000' # webpack hmr
 
 volumes:
