@@ -68,6 +68,7 @@ RUN chown -R $USER:$GROUP /usr/local/bin/start-container
 RUN apk add shadow \
     && usermod -u $UID $USER
 
+COPY xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 COPY php.ini /usr/local/etc/php/conf.d/99-php.ini
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 

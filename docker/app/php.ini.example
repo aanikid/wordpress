@@ -1,4 +1,7 @@
 memory_limit=512M
+upload_max_size=1024M
+post_max_size=1024M
+max_execution_time=300
 opcache.enable=0
 opcache.revalidate_freq=0
 opcache.max_accelerated_files = 20000

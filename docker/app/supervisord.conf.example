@@ -3,7 +3,7 @@ nodaemon=true
 user=root
 
 [program:php]
-command=/usr/local/bin/php 0.0.0.0:80
+command=/usr/local/bin/php -S 0.0.0.0:80
 user=www-data
 stdout_logfile=/dev/stdout
 stdout_logfile_maxbytes=0
