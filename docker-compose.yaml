@@ -1,27 +1,53 @@
-version: '3.3'
+version: '3.9'
 
 services:
-
   mariadb:
     image: 'mariadb:10.5.8'
+    container_name: ${CONTAINER_BASE_NAME}_mariadb
+    labels:
+      - traefik.enable=false
+    ports:
+      - ${FORWARDED_DB_PORT:-3306}:3306
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: wordpress
       DATADIR: /data
     restart: on-failure
+    networks:
+      - default
     volumes:
       - 'database:/data'
-    network_mode: 'service:wordpress'
 
-  wordpress:
-    image: 'elegantthemes/divi-dev'
-    hostname: divi-dev
-    volumes:
-      - '${PWD}:/workspace/wordpress'
+  app:
+    build:
+      context: docker/app
+      dockerfile: Dockerfile
+      args:
+        USER: ${CONTAINER_USER_NAME}
+        GROUP: ${CONTAINER_GROUP_NAME}
+        UID: ${LOCAL_UID}
+        GID: ${LOCAL_GID}
+    container_name: ${CONTAINER_BASE_NAME}_app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.`${CONTAINER_BASE_NAME}`.rule=Host(`${APP_DOMAIN}`) # domain to expose on
+      - traefik.docker.network=traefik_proxy
     ports:
-      - '80:80'     # nginx
-      - '3306:3306' # mariadb
-      - '3000:3000' # webpack hmr
+      - ${FORWARDED_DEFAULT_PORT:-80}:80
+    volumes:
+      - ./:/var/www/app
+    networks:
+      - default
+      - traefik_proxy
+    depends_on:
+      - mariadb
 
 volumes:
   database: {}
+
+networks:
+  default:
+    driver: bridge
+    name: ${CONTAINER_BASE_NAME}
+  traefik_proxy:
+    external: true

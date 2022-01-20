@@ -1,3 +1,6 @@
 .idea
+.env
 wp-content/debug.log
 wp-config.php
+supervisord.log
+supervisord.pid
