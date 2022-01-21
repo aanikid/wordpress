@@ -64,7 +64,6 @@ fi
 
 _echo -n LGREEN "Initialization.."
 cp -n docker/app/php.ini.example docker/app/php.ini
-cp -n docker/app/supervisord.conf.example docker/app/supervisord.conf
 cp -n docker/app/xdebug.ini.example docker/app/xdebug.ini
 _sleep_with_progress_bar 1 'Copy configuration files...'
 

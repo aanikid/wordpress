@@ -1,6 +1,46 @@
 version: '3.9'
 
 services:
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.`${CONTAINER_BASE_NAME}`.rule=Host(`${APP_DOMAIN}`) # domain to expose on
+      - traefik.docker.network=traefik_proxy
+    container_name: ${CONTAINER_BASE_NAME}_nginx
+    ports:
+      - ${FORWARDED_DEFAULT_PORT:-80}:80
+    volumes:
+      - ./:/var/www/app
+    links:
+      - app
+    networks:
+      - default
+      - traefik_proxy
+    depends_on:
+      - app
+
+  app:
+    build:
+      context: docker/app
+      dockerfile: Dockerfile
+      args:
+        USER: ${CONTAINER_USER_NAME}
+        GROUP: ${CONTAINER_GROUP_NAME}
+        UID: ${LOCAL_UID}
+        GID: ${LOCAL_GID}
+    container_name: ${CONTAINER_BASE_NAME}_app
+    labels:
+      - traefik.enable=false
+    volumes:
+      - ./:/var/www/app
+    networks:
+      - default
+    depends_on:
+      - mariadb
+
   mariadb:
     image: 'mariadb:10.5.8'
     container_name: ${CONTAINER_BASE_NAME}_mariadb
@@ -17,30 +57,6 @@ services:
       - default
     volumes:
       - 'database:/data'
-
-  app:
-    build:
-      context: docker/app
-      dockerfile: Dockerfile
-      args:
-        USER: ${CONTAINER_USER_NAME}
-        GROUP: ${CONTAINER_GROUP_NAME}
-        UID: ${LOCAL_UID}
-        GID: ${LOCAL_GID}
-    container_name: ${CONTAINER_BASE_NAME}_app
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.`${CONTAINER_BASE_NAME}`.rule=Host(`${APP_DOMAIN}`) # domain to expose on
-      - traefik.docker.network=traefik_proxy
-    ports:
-      - ${FORWARDED_DEFAULT_PORT:-80}:80
-    volumes:
-      - ./:/var/www/app
-    networks:
-      - default
-      - traefik_proxy
-    depends_on:
-      - mariadb
 
 volumes:
   database: {}

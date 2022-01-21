@@ -1,4 +1,4 @@
-FROM php:7.4-cli-alpine
+FROM php:7.4-fpm-alpine
 
 LABEL maintainer="Adrien DELHOM <adrien.delhom@outlook.com>"
 
@@ -17,8 +17,6 @@ RUN apk add --no-cache --update --repository http://nl.alpinelinux.org/alpine/ed
     git \
     tzdata \
     gnupg \
-    su-exec \
-    supervisor \
     mysql-client \
     libcap \
     nodejs \
@@ -67,15 +65,15 @@ RUN apk add shadow \
     && usermod -u $UID $USER
 
 RUN mkdir /home/www-data/.wp-cli
-COPY xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-COPY php.ini /usr/local/etc/php/conf.d/99-php.ini
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY start-container /usr/local/bin/start-container
-COPY wp-cli.yaml /home/www-data/.wp-cli/config.yml
-RUN chmod +x /usr/local/bin/start-container
+ADD xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+ADD php-fpm.conf /etc/php/php-fpm.d/
+ADD php.ini /etc/php/conf.d/
+ADD php.ini /etc/php/cli/conf.d/
+ADD wp-cli.yaml /home/www-data/.wp-cli/config.yml
 
 # Install wp cli
 RUN curl -o wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output-dir /usr/local/bin
 RUN chmod +x /usr/local/bin/wp
 
-ENTRYPOINT ["start-container"]
+EXPOSE 9000
+CMD ["php-fpm", "-F"]
