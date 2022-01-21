@@ -19,6 +19,7 @@ RUN apk add --no-cache --update --repository http://nl.alpinelinux.org/alpine/ed
     gnupg \
     su-exec \
     supervisor \
+    mysql-client \
     libcap \
     nodejs \
     npm \
@@ -50,8 +51,6 @@ RUN install-php-extensions \
     xdebug \
     @composer
 
-COPY start-container /usr/local/bin/start-container
-
 # Composer configuration
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_ALLOW_XDEBUG=0
@@ -59,17 +58,24 @@ ENV COMPOSER_DISABLE_XDEBUG_WARN=1
 
 # Miscellany
 RUN setcap "cap_net_bind_service=+ep" /usr/local/bin/php
-RUN chmod +x /usr/local/bin/start-container
+
 RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
 RUN chown -R $USER:$GROUP /var/www
-RUN chown -R $USER:$GROUP /usr/local/bin/start-container
 
 # Add UID and GID
 RUN apk add shadow \
     && usermod -u $UID $USER
 
+RUN mkdir /home/www-data/.wp-cli
 COPY xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 COPY php.ini /usr/local/etc/php/conf.d/99-php.ini
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY start-container /usr/local/bin/start-container
+COPY wp-cli.yaml /home/www-data/.wp-cli/config.yml
+RUN chmod +x /usr/local/bin/start-container
+
+# Install wp cli
+RUN curl -o wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output-dir /usr/local/bin
+RUN chmod +x /usr/local/bin/wp
 
 ENTRYPOINT ["start-container"]

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+_echo() {
+	local RESTORE='\033[0m'
+
+	local RED='\033[00;31m'
+	local GREEN='\033[00;32m'
+	local YELLOW='\033[00;33m'
+	local BLUE='\033[00;34m'
+	local PURPLE='\033[00;35m'
+	local CYAN='\033[00;36m'
+	local LIGHTGRAY='\033[00;37m'
+
+	local LRED='\033[01;31m'
+	local LGREEN='\033[01;32m'
+	local LYELLOW='\033[01;33m'
+	local LBLUE='\033[01;34m'
+	local LPURPLE='\033[01;35m'
+	local LCYAN='\033[01;36m'
+	local WHITE='\033[01;37m'
+
+	local COLOR="${LPURPLE}"
+	local MSG="$1"
+	local OPTIONS=''
+
+	if [[ "${#@}" -gt 2 ]]; then
+		OPTIONS="$1"
+		COLOR="${!2}"
+		MSG="$3"
+	elif [[ "${#@}" -gt 1 ]]; then
+		COLOR="${!1}"
+		MSG="$2"
+	fi
+
+	echo -en "${COLOR}"
+	echo "${OPTIONS}" "${MSG}"
+	echo -en "${RESTORE}"
+	echo
+}
+
+_sleep_with_progress_bar() {
+	local duration="$1"
+	local line_prefix="$2"
+
+	already_done() { echo -n "${line_prefix}"; for ((done=0; done<$elapsed; done++)); do printf "██"; done }
+	remaining() { for ((remain=$elapsed; remain<$duration; remain++)); do printf "  "; done }
+	percentage() { printf "| %s%%" $(( (($elapsed)*100)/($duration)*100/100 )); }
+	clean_line() { printf "\r"; }
+
+	for (( elapsed=1; elapsed<=$duration; elapsed++ ))
+	do
+		already_done; remaining; percentage
+		sleep 1
+		clean_line
+	done
+
+	echo
+}
+
+if [ -f .env ]
+then
+  export $(cat .env | sed 's/#.*//g' | xargs)
+fi
+
+_echo -n LGREEN "Initialization.."
+cp -n docker/app/php.ini.example docker/app/php.ini
+cp -n docker/app/supervisord.conf.example docker/app/supervisord.conf
+cp -n docker/app/xdebug.ini.example docker/app/xdebug.ini
+_sleep_with_progress_bar 1 'Copy configuration files...'
+
+cp -n .env.example .env
+_sleep_with_progress_bar 1 'Copy .env file...'
+
+./docky up -d
+_sleep_with_progress_bar 10 'Wait docker...'
+
+_echo -n LGREEN "Wordpress installation"
+./docky wp config create --url="$APP_DOMAIN"
+
+./docky wp core install \
+		--url="$APP_DOMAIN" \
+		--title='Wordpress Template' \
+		--admin_user=admin \
+		--admin_password=password \
+		--admin_email=admin@example.com \
+		--skip-email

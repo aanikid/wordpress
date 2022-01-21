@@ -1,0 +1,12 @@
+path: '/var/www/app'
+user: admin
+debug: false
+allow-root: true
+core config:
+  dbhost: mariadb
+  dbname: wordpress
+  dbuser: root
+  dbpass: password
+  extra-php: |
+    define( 'WP_DEBUG', true );
+    define( 'WP_DEBUG_LOG', true );
