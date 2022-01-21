@@ -67,6 +67,7 @@ RUN apk add shadow \
 RUN mkdir /home/www-data/.wp-cli
 ADD xdebug.ini /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 ADD php-fpm.conf /etc/php/php-fpm.d/
+ADD php.ini /usr/local/etc/php/conf.d/
 ADD php.ini /etc/php/conf.d/
 ADD php.ini /etc/php/cli/conf.d/
 ADD wp-cli.yaml /home/www-data/.wp-cli/config.yml
